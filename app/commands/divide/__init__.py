@@ -8,6 +8,9 @@ class DivideCommand(Command):
             return
         try:
             a, b = map(float, args.split())
-            print(f"{a} / {b} = {a / b}")
+            if b == 0:
+                print("Error: Division by zero.")
+            else:
+                print(f"{a} / {b} = {a / b}")
         except ValueError:
             print("Error: Please provide two numbers separated by a space.")
