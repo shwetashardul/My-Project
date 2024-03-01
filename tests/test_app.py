@@ -1,18 +1,19 @@
+"""Tests for the app module."""
 import pytest
 from app import App
 
 def test_app_start_exit_command(capfd, monkeypatch):
+    """Test app starts and exits correctly."""
     """Test that the REPL exits correctly on 'exit' command."""
     # Simulate user entering 'exit'
-    monkeypatch.setattr('builtins.input', lambda _: 'exit')
+    inputs = iter(['exit'])
+    monkeypatch.setattr('builtins.input', lambda _: next(inputs))
     app = App()
     with pytest.raises(SystemExit) as e:
         app.start()
     assert e.type == SystemExit
-
-
-
-import pytest
+    out, _ = capfd.readouterr()
+    assert "Type 'exit' to exit." in out
 
 def test_app_start_unknown_command(capfd, monkeypatch):
     """Test how the REPL handles an unknown command before exiting."""
