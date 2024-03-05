@@ -1,8 +1,10 @@
 import pkgutil
 import importlib
-#import os
+import os
 #import importlib
 #from pathlib import Path
+from multiprocessing import Process, Queue
+import traceback
 from app.commands import CommandHandler
 from app.commands import Command
 from app.plugins.menu import MenuCommand
@@ -11,25 +13,6 @@ class App:
     def __init__(self): # Constructor
         self.command_handler = CommandHandler()
 
-    '''def load_internal_plugins(self, start_dir='app/plugins'):
-        base_dir = os.path.dirname(__file__)
-        start_path = Path(base_dir) / start_dir
-        for root, dirs, files in os.walk(start_path):
-            if '__init__.py' in files:
-                relative_path = Path(root).relative_to(base_dir)
-                module_path = str(relative_path).replace(os.sep, '.')
-                module = importlib.import_module(module_path)
-                self.register_plugin_commands(module)
-
-    def register_plugin_commands(self, module):
-        for item_name in dir(module):
-            item = getattr(module, item_name)
-            if isinstance(item, type) and issubclass(item, Command) and item is not Command:
-                command_name = item_name.lower()  # Simplified example
-                self.command_handler.register_command(command_name, item())
-
-    def start(self):
-        self.load_internal_plugins()'''
     
     def load_plugins(self):
         # Dynamically load all plugins in the plugins directory
@@ -44,6 +27,36 @@ class App:
                             self.command_handler.register_command(plugin_name, item())
                     except TypeError:
                         continue  # If item is not a class or unrelated class, just ignore
+    
+    def execute_command_with_multiprocessing(self, command_name, args=""):
+        if command_name in self.command_handler.commands:
+            command = self.command_handler.commands[command_name]
+
+            def execute_command_process(q):
+                pid = os.getpid()
+                print(f"Executing '{command_name}' in process with PID: {pid}")
+                try:
+                    command.execute(args)
+                    q.put(("Success", f"Command '{command_name}' executed successfully in process {pid}"))
+                except Exception:
+                    exc_info = traceback.format_exc()
+                    q.put(("Error", f"Error executing '{command_name}' in process {pid}:\n{exc_info}"))
+
+            q = Queue()
+            process = Process(target=execute_command_process, args=(q,))
+            process.start()
+
+            # Wait for the process to finish and handle the result
+            result_type, message = q.get()
+            if result_type == "Error":
+                print("An error occurred during command execution:\n", message)
+            else:
+                print(message)
+
+            process.join()
+        else:
+            print(f"No such command: {command_name}")
+    
     def start(self):
         # Register commands here
         self.load_plugins()
@@ -61,5 +74,6 @@ class App:
             else:
                 print(f"No such command: {command_name}")
             
-
+             # Execute the command with multiprocessing
+            self.execute_command_with_multiprocessing(command_name, args)
 
