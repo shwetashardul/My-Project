@@ -19,14 +19,15 @@ class App:
         self.command_handler.register_command("greet", GreetCommand())
         self.command_handler.register_command("goodbye", GoodbyeCommand())
         self.command_handler.register_command("exit", ExitCommand())
-        self.command_handler.register_command("menu", MenuCommand())
+        #self.command_handler.register_command("menu", MenuCommand())
+        self.command_handler.register_command("menu", MenuCommand(self.command_handler))
         self.command_handler.register_command("discord", DiscordCommand())
         self.command_handler.register_command("add", AddCommand())
         self.command_handler.register_command("subtract", SubtractCommand())
         self.command_handler.register_command("multiply", MultiplyCommand())
         self.command_handler.register_command("divide", DivideCommand())
 
-        print("Type 'exit' to exit.")
+        print("Type 'menu' to display available commands. \nType 'exit' to exit.")
         while True:  #REPL Read, Evaluate, Print, Loop
             input_command = input(">>> ").strip()  # Read the command input
             command_parts = input_command.split(maxsplit=1)  # Split into command and arguments
